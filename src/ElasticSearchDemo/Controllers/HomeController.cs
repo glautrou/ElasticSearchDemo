@@ -15,28 +15,20 @@ namespace ElasticSearchDemo.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly IElasticClient _elasticClient;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, IElasticClient elasticClient)
         {
             _logger = logger;
+            _elasticClient = elasticClient;
         }
 
         public IActionResult Index()
         {
-            //Connect
-            var uri = new Uri("http://localhost:9200");
-            var settings = new ConnectionSettings(uri)
-                //Necessary?
-                .DefaultMappingFor<PersonFullDetails>(m => m
-                    .IndexName("person_full_details")
-                );
-            var client = new ElasticClient(settings);
-            client.MapPersonFullDetails();
-
             //Search data
             //http://localhost:9200/person_full_details/_search
             //Search exact term (case-insensitive)
-            /*var searchResponse = client.Search<PersonFullDetails>(s => s
+            /*var searchResponse = _elasticClient.Search<PersonFullDetails>(s => s
                 .From(0)
                 .Size(10)
                 .Query(q => q
@@ -47,7 +39,7 @@ namespace ElasticSearchDemo.Controllers
                 )
             );*/
             //Search start with
-            var searchResponse = client.Search<PersonFullDetails>(s => s
+            var searchResponse = _elasticClient.Search<PersonFullDetails>(s => s
                 .From(0)
                 .Size(10)
                 .Query(q => q
@@ -60,7 +52,7 @@ namespace ElasticSearchDemo.Controllers
             var people = searchResponse.Documents;
 
             //Low-level search
-            var searchResponseLowLevel = client.LowLevel.Search<SearchResponse<PersonFullDetails>>(PostData.Serializable(new
+            var searchResponseLowLevel = _elasticClient.LowLevel.Search<SearchResponse<PersonFullDetails>>(PostData.Serializable(new
             {
                 from = 0,
                 size = 10,
@@ -76,7 +68,7 @@ namespace ElasticSearchDemo.Controllers
             var responseJsonLowLevel = searchResponseLowLevel;
 
             //Aggregates
-            var searchResponseAgg = client.Search<PersonFullDetails>(s => s
+            var searchResponseAgg = _elasticClient.Search<PersonFullDetails>(s => s
                 .Size(0)
                 .Query(q => q
                     .Match(m => m
@@ -97,16 +89,6 @@ namespace ElasticSearchDemo.Controllers
 
         public IActionResult Populate()
         {
-            //Connect
-            var uri = new Uri("http://localhost:9200");
-            var settings = new ConnectionSettings(uri)
-                //Necessary?
-                .DefaultMappingFor<PersonFullDetails>(m => m
-                    .IndexName("person_full_details")
-                );
-            var client = new ElasticClient(settings);
-            client.MapPersonFullDetails();
-
             //Add data
             var person1 = new PersonFullDetails
             {
@@ -117,7 +99,7 @@ namespace ElasticSearchDemo.Controllers
             var person2 = new PersonFullDetails
             {
                 Id = 2,
-                Firstname = "Jean",
+                Firstname = "Jean-Pierre",
                 Lastname = "Dupont"
             };
             var person3 = new PersonFullDetails
@@ -127,9 +109,9 @@ namespace ElasticSearchDemo.Controllers
                 Lastname = "Dupont"
             };
 
-            var response1 = client.IndexDocument(person1);
-            var response2 = client.IndexDocument(person2);
-            var response3 = client.IndexDocument(person3);
+            var response1 = _elasticClient.IndexDocument(person1);
+            var response2 = _elasticClient.IndexDocument(person2);
+            var response3 = _elasticClient.IndexDocument(person3);
 
             return Ok("Populated with some data");
         }
