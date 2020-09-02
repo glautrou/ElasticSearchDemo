@@ -23,7 +23,7 @@ namespace ElasticSearchDemo.Controllers
             _elasticClient = elasticClient;
         }
 
-        public IActionResult Index()
+        public IActionResult Index(int pageSize = 10, int page = 1)
         {
             //Search data
             //http://localhost:9200/person_full_details/_search
@@ -68,13 +68,17 @@ namespace ElasticSearchDemo.Controllers
             var responseJsonLowLevel = searchResponseLowLevel;
 
             //Aggregates
+            //TODO: Order bu last/first
             var searchResponseAgg = _elasticClient.Search<PersonFullDetails>(s => s
-                .Size(0)
+                .From((page - 1) * pageSize)
+                .Size(pageSize)
+                //.Size(0)
                 .Query(q => q
-                    .Match(m => m
-                        .Field(f => f.Firstname)
-                        .Query("gilles")
-                    )
+                    .MatchAll()
+                /*.Match(m => m
+                    .Field(f => f.Firstname)
+                    .Query("gilles")
+                )*/
                 )
                 .Aggregations(a => a
                     .Terms("last_names", ta => ta
@@ -82,9 +86,51 @@ namespace ElasticSearchDemo.Controllers
                     )
                 )
             );
-            var termsAggregation = searchResponseAgg.Aggregations.Terms("last_names");
 
-            return View();
+            /*var search2 = new SearchDescriptor<PersonFullDetails>()
+               .Query(q => q
+                   .QueryString(queryString => queryString
+                       .Query("gilles")))
+               .Aggregations(a => a
+                   .Terms("last_names", term => term
+                       .Field(f => f.Lastname.Suffix("keyword"))));*/
+
+            //var search21 = _elasticClient.Search<PersonFullDetails>(search2);
+
+            var results = new List<SearchPersonModel>();
+            foreach (var document in searchResponseAgg.Documents)
+            {
+                results.Add(new SearchPersonModel
+                {
+                    Id = document.Id,
+                    Firstname = document.Firstname,
+                    Lastname = document.Lastname
+                });
+            }
+
+            var filters = new List<SearchFilter>();
+            //TODO: Add more groups
+            foreach (var bucket in searchResponseAgg.Aggregations.Terms("last_names").Buckets)
+            {
+                filters.Add(new SearchFilter
+                {
+                    Label = bucket.Key,
+                    Count = bucket.DocCount ?? 0
+                });
+            }
+
+            var totalPages = searchResponseAgg.Total / (double)pageSize;
+            var model = new SearchModel
+            {
+                SearchTerm = string.Empty,
+                NbTotalResults = searchResponseAgg.Total,
+                Results = results,
+                Filters = filters,
+                PageSize = pageSize,
+                CurrentPage = page,
+                TotalPages = (int)Math.Ceiling(totalPages)
+            };
+            return View(model);
         }
 
         public IActionResult Populate()
@@ -109,9 +155,20 @@ namespace ElasticSearchDemo.Controllers
                 Lastname = "Dupont"
             };
 
-            var response1 = _elasticClient.IndexDocument(person1);
-            var response2 = _elasticClient.IndexDocument(person2);
-            var response3 = _elasticClient.IndexDocument(person3);
+            var data = new[]
+            {
+                person1,
+                person2,
+                person3
+            };
+
+            _elasticClient.Bulk(b => b
+                .IndexMany(data)
+                .Refresh(Refresh.WaitFor));
+
+            //var response1 = _elasticClient.IndexDocument(person1);
+            //var response2 = _elasticClient.IndexDocument(person2);
+            //var response3 = _elasticClient.IndexDocument(person3);
 
             return Ok("Populated with some data");
         }

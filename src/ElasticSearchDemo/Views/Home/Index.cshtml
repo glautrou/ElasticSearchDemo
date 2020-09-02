@@ -1,8 +1,55 @@
-﻿@{
+﻿@model ElasticSearchDemo.Models.SearchModel
+@{
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<h1>Search</h1>
+<table style="width:100%">
+    <tr>
+        <td colspan="2">Search term: @Model.SearchTerm</td>
+    </tr>
+    <tr>
+        <td>
+            Filters:
+            <div style="clear:both;"></div>
+            @if(Model.Filters != null && Model.Filters.Any())
+            {
+                <ul>
+                    @foreach (var filter in Model.Filters)
+                    {
+                        <li>@filter.Label (@(filter.Count))</li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <text>No filter available</text>
+            }
+        </td>
+        <td>
+            <span>@Model.NbTotalResults</span> result(s)
+            <div style="clear:both;"></div>
+            @if(Model.Results != null && Model.Results.Any())
+            {
+                <ul>
+                    @foreach (var person in Model.Results)
+                    {
+                        <li>@person.Id - @person.Firstname @person.Lastname</li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <text>No result found</text>
+            }
+            <div style="clear:both;"></div>
+            Page @Model.CurrentPage on @Model.TotalPages (@Model.PageSize items per page)
+        </td>
+    </tr>
+</table>
+
+<script type="text/javascript">
+    $(function() {
+        alert "ready!" );
+    });
+</script>
