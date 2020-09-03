@@ -32,6 +32,24 @@ namespace ElasticSearchDemo.Models.ElasticSearch
                                 )
                             )
                         )
+                        //Make Company name keyword searchable
+                        .Text(t => t
+                            .Name(n => n.Company.Name)
+                            .Fields(ff => ff
+                                .Text(tt => tt
+                                    .Name("stop")
+                                    .Analyzer("stop")
+                                )
+                                .Text(tt => tt
+                                    .Name("shingles")
+                                    .Analyzer("name_shingles")
+                                )
+                                .Keyword(k => k
+                                    .Name("keyword")
+                                    .IgnoreAbove(256)
+                                )
+                            )
+                        )
                     )
                 )
             );

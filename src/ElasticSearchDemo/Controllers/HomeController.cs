@@ -84,6 +84,12 @@ namespace ElasticSearchDemo.Controllers
                     .Terms("last_names", ta => ta
                         .Field(f => f.Lastname.Suffix("keyword"))
                     )
+                    .Terms("roles", ta => ta
+                        .Field(f => f.Roles.Suffix("keyword"))
+                    )
+                    .Terms("company_names", ta => ta
+                        .Field(f => f.Company.Name.Suffix("keyword"))
+                    )
                 )
             );
 
@@ -108,16 +114,55 @@ namespace ElasticSearchDemo.Controllers
                 });
             }
 
-            var filters = new List<SearchFilter>();
-            //TODO: Add more groups
+            var filterGroups = new List<SearchFilterGroup>();
+            //Lastname
+            var lastnameFilters = new List<SearchFilter>();
             foreach (var bucket in searchResponseAgg.Aggregations.Terms("last_names").Buckets)
             {
-                filters.Add(new SearchFilter
+                lastnameFilters.Add(new SearchFilter
                 {
                     Label = bucket.Key,
                     Count = bucket.DocCount ?? 0
                 });
             }
+            var lastnameFilterGroup = new SearchFilterGroup
+            {
+                Label = "Lastname",
+                Filters = lastnameFilters
+            };
+            filterGroups.Add(lastnameFilterGroup);
+            //Role
+            var roleFilters = new List<SearchFilter>();
+            foreach (var bucket in searchResponseAgg.Aggregations.Terms("roles").Buckets)
+            {
+                roleFilters.Add(new SearchFilter
+                {
+                    Label = bucket.Key,
+                    Count = bucket.DocCount ?? 0
+                });
+            }
+            var roleFilterGroup = new SearchFilterGroup
+            {
+                Label = "Role",
+                Filters = roleFilters
+            };
+            filterGroups.Add(roleFilterGroup);
+            //Company
+            var companyFilters = new List<SearchFilter>();
+            foreach (var bucket in searchResponseAgg.Aggregations.Terms("company_names").Buckets)
+            {
+                companyFilters.Add(new SearchFilter
+                {
+                    Label = bucket.Key,
+                    Count = bucket.DocCount ?? 0
+                });
+            }
+            var companyFilterGroup = new SearchFilterGroup
+            {
+                Label = "Company",
+                Filters = companyFilters
+            };
+            filterGroups.Add(companyFilterGroup);
 
             var totalPages = searchResponseAgg.Total / (double)pageSize;
             var model = new SearchModel
@@ -125,7 +170,7 @@ namespace ElasticSearchDemo.Controllers
                 SearchTerm = string.Empty,
                 NbTotalResults = searchResponseAgg.Total,
                 Results = results,
-                Filters = filters,
+                FilterGroups = filterGroups,
                 PageSize = pageSize,
                 CurrentPage = page,
                 TotalPages = (int)Math.Ceiling(totalPages)
@@ -140,19 +185,40 @@ namespace ElasticSearchDemo.Controllers
             {
                 Id = 1,
                 Firstname = "Gilles",
-                Lastname = "Lautrou"
+                Lastname = "Lautrou",
+                Age = 30,
+                Roles = new List<string> { "Developer", "Architect", "Manager" },
+                Company = new PersonFullDetailsCompany
+                {
+                    Id = 1,
+                    Name = "Webnet"
+                }
             };
             var person2 = new PersonFullDetails
             {
                 Id = 2,
                 Firstname = "Jean-Pierre",
-                Lastname = "Dupont"
+                Lastname = "Dupont",
+                Age = 36,
+                Roles = new List<string> { "Developer" },
+                Company = new PersonFullDetailsCompany
+                {
+                    Id = 1,
+                    Name = "Webnet"
+                }
             };
             var person3 = new PersonFullDetails
             {
                 Id = 3,
                 Firstname = "Claude",
-                Lastname = "Dupont"
+                Lastname = "Dupont",
+                Age = 42,
+                Roles = new List<string> { "Developer", "DevOps" },
+                Company = new PersonFullDetailsCompany
+                {
+                    Id = 2,
+                    Name = "Microsoft"
+                }
             };
 
             var data = new[]

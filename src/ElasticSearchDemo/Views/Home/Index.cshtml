@@ -12,14 +12,22 @@
         <td>
             Filters:
             <div style="clear:both;"></div>
-            @if(Model.Filters != null && Model.Filters.Any())
+            @if (Model.FilterGroups != null && Model.FilterGroups.Any())
             {
-                <ul>
-                    @foreach (var filter in Model.Filters)
+                @foreach (var filterGroup in Model.FilterGroups)
+                {
+                    if (filterGroup.Filters != null && filterGroup.Filters.Any())
                     {
-                        <li>@filter.Label (@(filter.Count))</li>
+                        <strong>@filterGroup.Label</strong>
+                        <ul>
+                            @foreach (var filter in filterGroup.Filters)
+                            {
+                                <li>@filter.Label (@(filter.Count))</li>
+                            }
+                        </ul>
+                        <div style="clear:both;"></div>
                     }
-                </ul>
+                }
             }
             else
             {
