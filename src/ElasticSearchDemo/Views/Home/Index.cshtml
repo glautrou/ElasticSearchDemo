@@ -65,17 +65,20 @@
         $(function () {
 
             $('#btnSearch').click(function () {
-                search($('#term').val(), @Model.CurrentPage);
+                search($('#term').val(), @Model.CurrentPage, '', '', '');
             });
 
         });
 
-        function search(term, page) {
+        function search(term, page, lastnameFilterValue, companyFilterValue, roleFilterValue) {
             console.log('Searching...');
 
             var data = {
                 term,
-                page
+                page,
+                lastnameFilterValue,
+                companyFilterValue,
+                roleFilterValue
             };
             location.href = '/?' + $.param(data);
         }

@@ -97,23 +97,68 @@ namespace ElasticSearchDemo.Controllers
                 .From((model.Page - 1) * model.PageSize)
                 .Size(model.PageSize);
             //Term
-            if (string.IsNullOrEmpty(model.Term))
+            /*searchQuery = searchQuery
+                .Query(qu => qu
+                    .Bool(b => b
+                        //Term
+                        .Must(must => must
+                            .Match(m => m
+                                .Field(f => f.Firstname)
+                                .Query(model.Term)
+                                )
+                            )
+                        //Filter
+                        .Filter(f =>
+                            f.Match(term => term//Term?
+                                .Field(field => field.Lastname)
+                                .Query("Dupont")//Value?
+                            )
+                        )
+                    )
+                );*/
+            
+            var lastnames = new[] { model.LastnameFilterValue };
+            var companies = new[] { model.CompanyFilterValue };
+            var roles = new[] { model.RoleFilterValue };
+            var filters = new List<Func<QueryContainerDescriptor<PersonFullDetails>, QueryContainer>>();
+            if (lastnames.Any(i=> i != null))
             {
-                searchQuery = searchQuery
-                    .Query(q => q
-                        .MatchAll()
-                    );
+                filters.Add(fq => fq.Match(t => t.Field(f => f.Lastname).Query(lastnames.First())));
             }
-            else
+            if (companies.Any(i => i != null))
             {
-                searchQuery = searchQuery
-                    .Query(q => q
-                        .Match(m => m
-                            .Field(f => f.Firstname)
-                            .Query(model.Term)
-                )
+                filters.Add(fq => fq.Match(t => t.Field(f => f.Company.Name).Query(companies.First())));
+            }
+            if (roles.Any(i => i != null))
+            {
+                filters.Add(fq => fq.Match(t => t.Field(f => f.Roles).Query(roles.First())));
+            }
+
+            Fields firstnameField = Infer.Field<PersonFullDetails>(p => p.Firstname);
+            var lastnameField = Infer.Field<PersonFullDetails>(p => p.Lastname, 2);//Boost 2, more important
+            searchQuery = searchQuery
+                .Query(qu => qu
+                    .Bool(b => b
+                        //Term
+                        .Must(must => must
+                            //.Match(m => m
+                            .MultiMatch(m => m
+                                //.Field(f => f.Firstname)
+                                .Fields(firstnameField.And(lastnameField))
+                                .Query(model.Term)
+                                )
+                            )
+                        //Filter
+                        .Filter(filters)
+                        /*.Filter(f =>
+                            f.Match(term => term//Term?
+                                .Field(field => field.Lastname)
+                                .Query(model.NameFilterValue)//Value?
+                            )
+                        )*/
+                    )
                 );
-            }
+            
             //Aggregates
             searchQuery = searchQuery
                 .Aggregations(a => a
