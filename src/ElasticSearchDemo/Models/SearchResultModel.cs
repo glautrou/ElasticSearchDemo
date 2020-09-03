@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace ElasticSearchDemo.Models
 {
-    public class SearchModel
+    public class SearchResultModel
     {
         public string SearchTerm { get; set; }
         public long NbTotalResults { get; set; }

@@ -1,12 +1,16 @@
-﻿@model ElasticSearchDemo.Models.SearchModel
-@{
-    ViewData["Title"] = "Home Page";
-}
+﻿@model ElasticSearchDemo.Models.SearchResultModel
+@{ ViewData["Title"] = "Home Page"; }
 
 <h1>Search</h1>
 <table style="width:100%">
     <tr>
-        <td colspan="2">Search term: @Model.SearchTerm</td>
+        <td colspan="2">
+            <label for="term">Search term: </label>
+            <input type="text" id="term" name="term" value="@Model.SearchTerm">
+            <button type="button" id="btnSearch">Search</button>
+            <br><br>
+
+        </td>
     </tr>
     <tr>
         <td>
@@ -14,7 +18,7 @@
             <div style="clear:both;"></div>
             @if (Model.FilterGroups != null && Model.FilterGroups.Any())
             {
-                @foreach (var filterGroup in Model.FilterGroups)
+                foreach (var filterGroup in Model.FilterGroups)
                 {
                     if (filterGroup.Filters != null && filterGroup.Filters.Any())
                     {
@@ -37,7 +41,7 @@
         <td>
             <span>@Model.NbTotalResults</span> result(s)
             <div style="clear:both;"></div>
-            @if(Model.Results != null && Model.Results.Any())
+            @if (Model.Results != null && Model.Results.Any())
             {
                 <ul>
                     @foreach (var person in Model.Results)
@@ -56,8 +60,24 @@
     </tr>
 </table>
 
-<script type="text/javascript">
-    $(function() {
-        alert "ready!" );
-    });
-</script>
+@section scripts {
+    <script type="text/javascript">
+        $(function () {
+
+            $('#btnSearch').click(function () {
+                search($('#term').val(), @Model.CurrentPage);
+            });
+
+        });
+
+        function search(term, page) {
+            console.log('Searching...');
+
+            var data = {
+                term,
+                page
+            };
+            location.href = '/?' + $.param(data);
+        }
+    </script>
+}

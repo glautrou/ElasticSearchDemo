@@ -23,7 +23,7 @@ namespace ElasticSearchDemo.Controllers
             _elasticClient = elasticClient;
         }
 
-        public IActionResult Index(int pageSize = 10, int page = 1)
+        public IActionResult Index(SearchQueryModel model)
         {
             //Search data
             //http://localhost:9200/person_full_details/_search
@@ -69,9 +69,9 @@ namespace ElasticSearchDemo.Controllers
 
             //Aggregates
             //TODO: Order bu last/first
-            var searchResponseAgg = _elasticClient.Search<PersonFullDetails>(s => s
-                .From((page - 1) * pageSize)
-                .Size(pageSize)
+            var searchResponseAggOLD = _elasticClient.Search<PersonFullDetails>(s => s
+                .From((model.Page - 1) * model.PageSize)
+                .Size(model.PageSize)
                 //.Size(0)
                 .Query(q => q
                     .MatchAll()
@@ -92,6 +92,49 @@ namespace ElasticSearchDemo.Controllers
                     )
                 )
             );
+
+            var searchQuery = new SearchDescriptor<PersonFullDetails>()
+                .From((model.Page - 1) * model.PageSize)
+                .Size(model.PageSize)
+                .Query(q => q
+                    .MatchAll()
+                /*.Match(m => m
+                    .Field(f => f.Firstname)
+                    .Query("gilles")
+                )*/
+                );
+            //Term
+            if (string.IsNullOrEmpty(model.Term))
+            {
+                searchQuery = searchQuery
+                    .Query(q => q
+                        .MatchAll()
+                    );
+            }
+            else
+            {
+                searchQuery = searchQuery
+                    .Query(q => q
+                        .Match(m => m
+                            .Field(f => f.Firstname)
+                            .Query(model.Term)
+                )
+                );
+            }
+            //Aggregates
+            searchQuery = searchQuery
+                .Aggregations(a => a
+                    .Terms("last_names", ta => ta
+                        .Field(f => f.Lastname.Suffix("keyword"))
+                    )
+                    .Terms("roles", ta => ta
+                        .Field(f => f.Roles.Suffix("keyword"))
+                    )
+                    .Terms("company_names", ta => ta
+                        .Field(f => f.Company.Name.Suffix("keyword"))
+                    )
+                );
+            var searchResponseAgg = _elasticClient.Search<PersonFullDetails>(searchQuery);
 
             /*var search2 = new SearchDescriptor<PersonFullDetails>()
                .Query(q => q
@@ -164,18 +207,18 @@ namespace ElasticSearchDemo.Controllers
             };
             filterGroups.Add(companyFilterGroup);
 
-            var totalPages = searchResponseAgg.Total / (double)pageSize;
-            var model = new SearchModel
+            var totalPages = searchResponseAgg.Total / (double)model.PageSize;
+            var data = new SearchResultModel
             {
-                SearchTerm = string.Empty,
+                SearchTerm = model.Term,
                 NbTotalResults = searchResponseAgg.Total,
                 Results = results,
                 FilterGroups = filterGroups,
-                PageSize = pageSize,
-                CurrentPage = page,
+                PageSize = model.PageSize,
+                CurrentPage = model.Page,
                 TotalPages = (int)Math.Ceiling(totalPages)
             };
-            return View(model);
+            return View(data);
         }
 
         public IActionResult Populate()
