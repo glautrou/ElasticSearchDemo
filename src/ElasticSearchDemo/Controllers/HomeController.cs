@@ -95,14 +95,7 @@ namespace ElasticSearchDemo.Controllers
 
             var searchQuery = new SearchDescriptor<PersonFullDetails>()
                 .From((model.Page - 1) * model.PageSize)
-                .Size(model.PageSize)
-                .Query(q => q
-                    .MatchAll()
-                /*.Match(m => m
-                    .Field(f => f.Firstname)
-                    .Query("gilles")
-                )*/
-                );
+                .Size(model.PageSize);
             //Term
             if (string.IsNullOrEmpty(model.Term))
             {
