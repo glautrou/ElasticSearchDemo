@@ -191,7 +191,14 @@ namespace ElasticSearchDemo.Controllers
                 {
                     Id = document.Id,
                     Firstname = document.Firstname,
-                    Lastname = document.Lastname
+                    Lastname = document.Lastname,
+                    Age = document.Age,
+                    Roles = document.Roles,
+                    Company = new SearchCompanyModel
+                    {
+                        Id = document.Company.Id,
+                        Name = document.Company.Name
+                    }
                 });
             }
 

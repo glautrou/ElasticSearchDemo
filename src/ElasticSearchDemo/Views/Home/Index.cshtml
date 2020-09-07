@@ -2,34 +2,37 @@
 @{ ViewData["Title"] = "Home Page"; }
 
 <h1>Search</h1>
-<table style="width:100%">
-    <tr>
-        <td colspan="2">
-            <label for="term">Search term: </label>
-            <input type="text" id="term" name="term" value="@Model.SearchTerm">
-            <button type="button" id="btnSearch">Search</button>
-            <br><br>
+<form id="frmSearch" class="clearfix">
+    <div class="form-group">
+        <label asp-for="SearchTerm">Search term</label>
+        <input asp-for="SearchTerm" class="form-control" placeholder="What are you looking for?" />
+    </div>
+    <button type="submit" class="btn btn-primary float-right">Search</button>
+</form>
+<hr class="my-4">
 
-        </td>
-    </tr>
-    <tr>
-        <td>
-            Filters:
-            <div style="clear:both;"></div>
+<div class="container">
+    <div class="row">
+        <div class="col-3">
             @if (Model.FilterGroups != null && Model.FilterGroups.Any())
             {
                 foreach (var filterGroup in Model.FilterGroups)
                 {
                     if (filterGroup.Filters != null && filterGroup.Filters.Any())
                     {
-                        <strong>@filterGroup.Label</strong>
-                        <ul>
-                            @foreach (var filter in filterGroup.Filters)
-                            {
-                                <li>@filter.Label (@(filter.Count))</li>
-                            }
-                        </ul>
-                        <div style="clear:both;"></div>
+                        <p class="clearfix">
+                            <strong>@filterGroup.Label</strong>
+                            <ul>
+                                @foreach (var filter in filterGroup.Filters)
+                                {
+                                    <li>
+                                        <a href="#">
+                                            @filter.Label <span class="badge badge-light">@filter.Count</span>
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </p>
                     }
                 }
             }
@@ -37,45 +40,105 @@
             {
                 <text>No filter available</text>
             }
-        </td>
-        <td>
-            <span>@Model.NbTotalResults</span> result(s)
+        </div>
+        <div class="col-9">
+            <h3>@Model.NbTotalResults @(Model.NbTotalResults > 1 ? "results" : "result")</h3>
             <div style="clear:both;"></div>
             @if (Model.Results != null && Model.Results.Any())
             {
-                <ul>
-                    @foreach (var person in Model.Results)
-                    {
-                        <li>@person.Id - @person.Firstname @person.Lastname</li>
-                    }
-                </ul>
-            }
-            else
-            {
-                <text>No result found</text>
-            }
+        <table class="table table-bordered table-striped">
+            <thead class="thead-light">
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Firstname</th>
+                    <th scope="col">Lastname</th>
+                    <th scope="col">Age</th>
+                    <th scope="col">Roles</th>
+                    <th scope="col">Company</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var person in Model.Results)
+                {
+                <tr>
+                    <td>@person.Id</td>
+                    <td>@person.Firstname</td>
+                    <td>@person.Lastname</td>
+                    <td>@person.Age</td>
+                    <td>@string.Join(", ", person.Roles)</td>
+                    <td>@person.Company?.Name</td>
+                </tr>              }
+            </tbody>
+        </table>
+
+                         }
+                                    else
+                                    {
+                        <text>No result found</text>}
             <div style="clear:both;"></div>
-            Page @Model.CurrentPage on @Model.TotalPages (@Model.PageSize items per page)
-        </td>
-    </tr>
-</table>
+            Page @Model.CurrentPage on @Model.TotalPages (<input asp-for="PageSize" style="width:40px;"/> items per page)
+
+            <nav aria-label="Page navigation example">
+                <ul class="pagination justify-content-end">
+                    <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                        <a class="page-link" href="#" data-page="@(Model.CurrentPage-1)" tabindex="-1">&lt;</a>
+                    </li>
+
+                    @{ List<int> pages;
+                        if (Model.CurrentPage == 1)
+                        {
+                            pages = new List<int>() { Model.CurrentPage, Model.CurrentPage + 1, Model.CurrentPage + 2 };
+                        }
+                        else if (Model.CurrentPage == Model.TotalPages)
+                        {
+                            pages = new List<int>() { Model.CurrentPage - 2, Model.CurrentPage - 1, Model.CurrentPage };
+                        }
+                        else
+                        {
+                            pages = new List<int>() { Model.CurrentPage - 1, Model.CurrentPage, Model.CurrentPage + 1 };
+                        }
+                        pages = pages.Where(i => i > 0 && i <= Model.TotalPages).ToList();
+
+                        foreach (var page in pages)
+                        {
+                <li class="page-item @(Model.CurrentPage == page ? "active" : "")"><a class="page-link" href="#" data-page="@(page)">@(page)</a></li> } }
+
+                    <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link" href="#" data-page="@(Model.CurrentPage+1)">&gt;</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
 
 @section scripts {
     <script type="text/javascript">
         $(function () {
 
-            $('#btnSearch').click(function () {
-                search($('#term').val(), @Model.CurrentPage, '', '', '');
+            $('#frmSearch').submit(function (e) {
+                search($('#SearchTerm').val(), @Model.CurrentPage, @Model.PageSize, '', '', '');
+                e.preventDefault();
+                return false;
+            });
+
+            $('.page-link').click(function (e) {
+                search('@Model.SearchTerm', $(this).attr('data-page'), @Model.PageSize, '', '', '');
+                e.preventDefault();
+                return false;
+            });
+
+            $('#PageSize').blur(function () {
+                search('@Model.SearchTerm', @Model.CurrentPage, $('#PageSize').val(), '', '', '');
             });
 
         });
 
-        function search(term, page, lastnameFilterValue, companyFilterValue, roleFilterValue) {
-            console.log('Searching...');
-
+        function search(term, page, pageSize, lastnameFilterValue, companyFilterValue, roleFilterValue) {
             var data = {
                 term,
                 page,
+                pageSize,
                 lastnameFilterValue,
                 companyFilterValue,
                 roleFilterValue
