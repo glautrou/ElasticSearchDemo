@@ -20,13 +20,32 @@
                 {
                     if (filterGroup.Filters != null && filterGroup.Filters.Any())
                     {
+                        var selectedItems = new string[] { };
+                        switch (filterGroup.Label)
+                        {
+                            case "Lastname":
+                                selectedItems = Model.LastnameFilterValues;
+                                break;
+                            case "Company":
+                                selectedItems = Model.CompanyFilterValues;
+                                break;
+                            case "Role":
+                                selectedItems = Model.RoleFilterValues;
+                                break;
+                            default:
+                                break;
+                        }
+                        selectedItems = selectedItems ?? new string[] { };
+
                         <p class="clearfix">
                             <strong>@filterGroup.Label</strong>
                             <ul>
                                 @foreach (var filter in filterGroup.Filters)
                                 {
+                                    var isSelected = selectedItems.Any(i => i == filter.Label);
+
                                     <li>
-                                        <a href="#">
+                                        <a href="#" class="@(isSelected ? "text-danger" : "")" data-filter-type="@filterGroup.Label" data-filter-value="@filter.Label" data-filter-selected="@(isSelected ? "selected" : "")" >
                                             @filter.Label <span class="badge badge-light">@filter.Count</span>
                                         </a>
                                     </li>
@@ -132,18 +151,51 @@
                 search('@Model.SearchTerm', @Model.CurrentPage, $('#PageSize').val(), '', '', '');
             });
 
+            $('a[data-filter-type]').click(function (e) {
+                var isSelected = $(this).attr('data-filter-selected');
+                if (isSelected === 'selected') {
+                    //Remove filter
+                    location.href = location.href.replace(`${$(this).attr('data-filter-type').toLowerCase()}FilterValues=${$(this).attr('data-filter-value')}`, '');
+                }
+                else {
+                    //Add filter
+                    var parameters = {};
+                    parameters[$(this).attr('data-filter-type')] = $(this).attr('data-filter-value');
+                    search('@Model.SearchTerm', @Model.CurrentPage, @Model.PageSize, parameters.Lastname, parameters.Company, parameters.Role);
+                }
+
+                e.preventDefault();
+                return false;
+            });
+
         });
 
         function search(term, page, pageSize, lastnameFilterValue, companyFilterValue, roleFilterValue) {
-            var data = {
-                term,
-                page,
-                pageSize,
-                lastnameFilterValue,
-                companyFilterValue,
-                roleFilterValue
-            };
-            location.href = '/?' + $.param(data);
+            var url = `/?term=${term}&page=${page}&pageSize=${pageSize}`;
+
+            var lastnames = [ @Html.Raw(string.Join(", ", Model.LastnameFilterValues != null ? Model.LastnameFilterValues.Select(i=> $"'{i}'") : new string[] { })) ];
+            var companies = [ @Html.Raw(string.Join(", ", Model.CompanyFilterValues != null ? Model.CompanyFilterValues.Select(i => $"'{i}'") : new string[] { })) ];
+            var roles = [ @Html.Raw(string.Join(", ", Model.RoleFilterValues != null ? Model.RoleFilterValues.Select(i => $"'{i}'") : new string[] { })) ];
+
+            url += getFilterForUrl(lastnames, lastnameFilterValue, 'lastnameFilterValues');
+            url += getFilterForUrl(companies, companyFilterValue, 'companyFilterValues');
+            url += getFilterForUrl(roles, roleFilterValue, 'roleFilterValues');
+
+            location.href = url;
+        }
+
+        function getFilterForUrl(list, item, name) {
+            var result = '';
+
+            if (item) {
+                list.push(item);
+            }
+
+            for (var i = 0; i < list.length; i++) {
+                result += `&${name}=${list[i]}`;
+            }
+
+            return result;
         }
     </script>
 }

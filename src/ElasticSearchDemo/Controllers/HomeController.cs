@@ -116,22 +116,33 @@ namespace ElasticSearchDemo.Controllers
                         )
                     )
                 );*/
-            
-            var lastnames = new[] { model.LastnameFilterValue };
-            var companies = new[] { model.CompanyFilterValue };
-            var roles = new[] { model.RoleFilterValue };
+
+            //TODO: Clean next lines
+            var lastnames = model.LastnameFilterValues ?? new string[] { };
+            var companies = model.CompanyFilterValues ?? new string[] { };
+            var roles = model.RoleFilterValues ?? new string[] { };
             var filters = new List<Func<QueryContainerDescriptor<PersonFullDetails>, QueryContainer>>();
+            //TODO: Include 1+ filters
             if (lastnames.Any(i=> i != null))
             {
-                filters.Add(fq => fq.Match(t => t.Field(f => f.Lastname).Query(lastnames.First())));
+                foreach (var lastname in lastnames)
+                {
+                    filters.Add(fq => fq.Match(t => t.Field(f => f.Lastname).Query(lastname)));
+                }
             }
             if (companies.Any(i => i != null))
             {
-                filters.Add(fq => fq.Match(t => t.Field(f => f.Company.Name).Query(companies.First())));
+                foreach (var company in companies)
+                {
+                    filters.Add(fq => fq.Match(t => t.Field(f => f.Company.Name).Query(company)));
+                }
             }
             if (roles.Any(i => i != null))
             {
-                filters.Add(fq => fq.Match(t => t.Field(f => f.Roles).Query(roles.First())));
+                foreach (var role in roles)
+                {
+                    filters.Add(fq => fq.Match(t => t.Field(f => f.Roles).Query(role)));
+                }
             }
 
             Fields firstnameField = Infer.Field<PersonFullDetails>(p => p.Firstname);
@@ -261,13 +272,17 @@ namespace ElasticSearchDemo.Controllers
                 FilterGroups = filterGroups,
                 PageSize = model.PageSize,
                 CurrentPage = model.Page,
-                TotalPages = (int)Math.Ceiling(totalPages)
+                TotalPages = (int)Math.Ceiling(totalPages),
+                LastnameFilterValues = model.LastnameFilterValues,
+                CompanyFilterValues = model.CompanyFilterValues,
+                RoleFilterValues = model.RoleFilterValues
             };
             return View(data);
         }
 
         public IActionResult Populate()
         {
+            //TODO: Add Lorem ipsum description for full-text search with highlighting and score
             //Add data
             var person1 = new PersonFullDetails
             {

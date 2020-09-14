@@ -11,6 +11,9 @@ namespace ElasticSearchDemo.Models
         public int CurrentPage { get; set; }
         public int PageSize { get; set; }
         public int TotalPages { get; set; }
+        public string[] LastnameFilterValues { get; set; }
+        public string[] CompanyFilterValues { get; set; }
+        public string[] RoleFilterValues { get; set; }
     }
 
     public class SearchPersonModel
