@@ -169,6 +169,14 @@ namespace ElasticSearchDemo.Controllers
                             )
                         )*/
                     )
+                ).Highlight(h => h
+                    .PreTags("<b>")
+                    .PostTags("</b>")
+                    .Fields(f => f
+                        .Field(e => e.Bio)
+                        .PreTags("<span class=\"highlighted\">")
+                        .PostTags("</span>")
+                    )
                 );
             
             //Aggregates
@@ -197,8 +205,15 @@ namespace ElasticSearchDemo.Controllers
             //var search21 = _elasticClient.Search<PersonFullDetails>(search2);
 
             var results = new List<SearchPersonModel>();
-            foreach (var document in searchResponseAgg.Documents)
+            var i = 0;
+            foreach (var hit in searchResponseAgg.Hits)
             {
+                var document = hit.Source;
+                foreach (var highlight in hit.Highlight)
+                {
+                    if (highlight.Key == "bio")
+                        document.Bio = highlight.Value.FirstOrDefault();
+                }
                 results.Add(new SearchPersonModel
                 {
                     Id = document.Id,
@@ -213,6 +228,7 @@ namespace ElasticSearchDemo.Controllers
                         Name = document.Company.Name
                     }
                 });
+                i++;
             }
 
             var filterGroups = new List<SearchFilterGroup>();

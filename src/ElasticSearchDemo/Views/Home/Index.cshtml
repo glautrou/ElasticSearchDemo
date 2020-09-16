@@ -87,7 +87,7 @@
                     <td>@person.Age</td>
                     <td>@Html.Raw(string.Join("<br /> ", person.Roles))</td>
                     <td>@person.Company?.Name</td>
-                    <td>@person.Bio</td>
+                    <td>@Html.Raw(person.Bio)</td>
                 </tr>              }
             </tbody>
         </table>
