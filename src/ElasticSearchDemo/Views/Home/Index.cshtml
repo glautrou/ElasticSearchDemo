@@ -74,6 +74,7 @@
                     <th scope="col">Age</th>
                     <th scope="col">Roles</th>
                     <th scope="col">Company</th>
+                    <th scope="col">Bio</th>
                 </tr>
             </thead>
             <tbody>
@@ -84,8 +85,9 @@
                     <td>@person.Firstname</td>
                     <td>@person.Lastname</td>
                     <td>@person.Age</td>
-                    <td>@string.Join(", ", person.Roles)</td>
+                    <td>@Html.Raw(string.Join("<br /> ", person.Roles))</td>
                     <td>@person.Company?.Name</td>
+                    <td>@person.Bio</td>
                 </tr>              }
             </tbody>
         </table>

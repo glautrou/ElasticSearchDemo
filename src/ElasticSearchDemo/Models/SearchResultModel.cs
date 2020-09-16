@@ -22,6 +22,7 @@ namespace ElasticSearchDemo.Models
         public string Firstname { get; set; }
         public string Lastname { get; set; }
         public int? Age { get; set; }
+        public string Bio { get; set; }
         public List<string> Roles { get; set; }
         public SearchCompanyModel Company { get; set; }
     }

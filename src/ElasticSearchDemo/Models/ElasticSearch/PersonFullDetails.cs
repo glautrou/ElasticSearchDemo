@@ -14,6 +14,7 @@ namespace ElasticSearchDemo.Models.ElasticSearch
         //[Text(Name = "last_name")]
         public string Lastname { get; set; }
         public int? Age { get; set; }
+        public string Bio { get; set; }
         public List<string> Roles { get; set; }
         public PersonFullDetailsCompany Company { get; set; }
     }

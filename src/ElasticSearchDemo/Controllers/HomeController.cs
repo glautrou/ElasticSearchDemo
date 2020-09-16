@@ -147,6 +147,7 @@ namespace ElasticSearchDemo.Controllers
 
             Fields firstnameField = Infer.Field<PersonFullDetails>(p => p.Firstname);
             var lastnameField = Infer.Field<PersonFullDetails>(p => p.Lastname, 2);//Boost 2, more important
+            var bioField = Infer.Field<PersonFullDetails>(p => p.Bio);
             searchQuery = searchQuery
                 .Query(qu => qu
                     .Bool(b => b
@@ -155,7 +156,7 @@ namespace ElasticSearchDemo.Controllers
                             //.Match(m => m
                             .MultiMatch(m => m
                                 //.Field(f => f.Firstname)
-                                .Fields(firstnameField.And(lastnameField))
+                                .Fields(firstnameField.And(lastnameField).And(bioField))
                                 .Query(model.Term)
                                 )
                             )
@@ -204,6 +205,7 @@ namespace ElasticSearchDemo.Controllers
                     Firstname = document.Firstname,
                     Lastname = document.Lastname,
                     Age = document.Age,
+                    Bio = document.Bio,
                     Roles = document.Roles,
                     Company = new SearchCompanyModel
                     {
@@ -290,6 +292,7 @@ namespace ElasticSearchDemo.Controllers
                 Firstname = "Gilles",
                 Lastname = "Lautrou",
                 Age = 30,
+                Bio = "Sites internet, applications métiers, intranets collaboratifs, solutions de mobilité. Webnet rassemble 140 ingénieurs, consultants, experts des technologies internet. Ethique et diversité. 140 experts du digital. Culture de l’innovation. Guidé par vos objectifs.",
                 Roles = new List<string> { "Developer", "Architect", "Manager" },
                 Company = new PersonFullDetailsCompany
                 {
@@ -303,6 +306,7 @@ namespace ElasticSearchDemo.Controllers
                 Firstname = "Jean-Pierre",
                 Lastname = "Dupont",
                 Age = 36,
+                Bio = "Microsoft, en tant qu'acteur de la transformation numérique en France, aide les individus et les entreprises du monde entier à exploiter pleinement leur potentiel.",
                 Roles = new List<string> { "Developer" },
                 Company = new PersonFullDetailsCompany
                 {
@@ -316,6 +320,7 @@ namespace ElasticSearchDemo.Controllers
                 Firstname = "Claude",
                 Lastname = "Dupont",
                 Age = 42,
+                Bio = "Planifiez plus intelligemment, collaborez mieux et livrez plus rapidement avec Azure DevOps Services, anciennement connu sous le nom Visual Studio Team",
                 Roles = new List<string> { "Developer", "DevOps" },
                 Company = new PersonFullDetailsCompany
                 {
